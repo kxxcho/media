@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>media</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<style>
+    :root {
+        --editor-bg: #fafafa;
+        --editor-card: #ffffff;
+        --editor-text: #222222;
+        --editor-accent: #000000;
+        --editor-border: #dddddd;
+        
+        --yt-bg: #ffffff;
+        --yt-text: #0f0f0f;
+        --yt-text-spec: #0f0f0f;
+        --yt-secondary: #606060;
+        --yt-border: #e5e5e5;
+        --yt-search-bg: #ffffff;
+        --yt-search-btn: #f8f8f8;
+        --yt-search-border: #cccccc;
+        --yt-badge-bg: rgba(0, 0, 0, 0.85);
+        --yt-sub-bg: #0f0f0f;
+        --yt-sub-text: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+    
+    body {
+        font-family: 'Noto Sans KR', 'Roboto', sans-serif;
+        background-color: #eeeeee;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        color: var(--editor-text);
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+        body { flex-direction: column; overflow: auto; }
+        .editor-sidebar { width: 100% !important; border-right: none; border-bottom: 2px solid var(--editor-border); }
+        .preview-workspace { padding: 20px 10px !important; height: auto !important; min-height: 500px; }
+        #scale-wrapper { transform: scale(0.32) !important; }
+    }
+
+    .editor-sidebar {
+        width: 420px; background-color: var(--editor-bg); border-right: 1px solid var(--editor-border);
+        display: flex; flex-direction: column; height: 100%; flex-shrink: 0; z-index: 50;
+    }
+
+    .editor-header { padding: 20px; background-color: #ffffff; border-bottom: 1px solid var(--editor-border); text-align: center; }
+    .editor-header h2 { margin: 0; font-size: 20px; color: var(--editor-accent); font-weight: 900; letter-spacing: -0.5px; }
+    .editor-header p { margin: 5px 0 0 0; font-size: 12px; color: #777777; }
+
+    .editor-scroll-area { flex: 1; overflow-y: auto; padding: 20px; }
+
+    .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #111111; font-weight: 800; margin: 25px 0 12px 0; padding-bottom: 6px; border-bottom: 2px solid #333333; }
+    .section-title:first-of-type { margin-top: 0; }
+
+    .input-group { margin-bottom: 14px; }
+    .input-group label { display: block; font-size: 12px; color: #444444; margin-bottom: 6px; font-weight: 700; }
+    
+    .input-group input[type="text"], .input-group textarea, .input-group select {
+        width: 100%; padding: 10px 12px; background-color: var(--editor-card); border: 1px solid #cccccc;
+        border-radius: 6px; color: #111111; font-size: 13px; font-family: inherit; transition: border-color 0.2s; margin: 0;
+    }
+    .input-group input:focus, .input-group textarea:focus, .input-group select:focus { outline: none; border-color: #333333; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1); }
+    .input-group textarea { resize: none; height: 60px; }
+    
+    .input-group input[type="file"] { width: 100%; padding: 8px; background: #f4f4f4; border: 1px dashed #aaaaaa; border-radius: 6px; color: #555555; font-size: 12px; cursor: pointer; }
+
+    .flex-row { display: flex; gap: 8px; }
+    .flex-row .input-group { flex: 1; }
+
+    .btn-block { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; transition: background 0.2s, transform 0.1s; margin-bottom: 8px; }
+    .btn-block:active { transform: scale(0.98); }
+    .btn-dark { background-color: #444444; color: white; }
+    .btn-dark:hover { background-color: #222222; }
+    .btn-success { background-color: #111111; color: white; margin-top: 10px; border: 1px solid #000; }
+    .btn-success:hover { background-color: #333333; }
+
+    .preview-workspace { flex: 1; background-color: #e2e2e2; padding: 40px; overflow: auto; display: flex; justify-content: center; align-items: flex-start; }
+
+    #scale-wrapper {
+        transform: scale(0.80); transform-origin: top center; transition: transform 0s;
+    }
+
+    #capture-container {
+        width: 1280px; min-width: 1280px; background-color: var(--yt-bg);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); border-radius: 8px; overflow: hidden; position: relative;
+        height: max-content; 
+    }
+
+    .youtube-pc-window { width: 1280px; background-color: var(--yt-bg); color: var(--yt-text); font-family: "Roboto", "Arial", sans-serif; height: max-content; }
+
+    .yt-header { width: 1280px; height: 56px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--yt-border); background-color: var(--yt-bg); box-sizing: border-box; }
+    .yt-header-left { display: flex; align-items: center; width: 250px; }
+    .yt-menu-icon { font-size: 18px; cursor: pointer; color: var(--yt-text); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+
+    .yt-header-center { display: flex; align-items: center; justify-content: center; flex: 1; max-width: 720px; }
+    
+    .yt-search-wrapper { display: flex; align-items: center; flex: 1; border: 1px solid var(--yt-search-border); border-radius: 40px; overflow: hidden; background-color: var(--yt-search-bg); max-width: 600px; height: 40px; box-sizing: border-box; }
+    .yt-search-input { 
+        flex: 1; border: none; background: transparent; padding: 0 16px; color: var(--yt-text); 
+        font-size: 16px; outline: none; margin: 0; 
+        height: 24px; line-height: 24px;
+    }
+    .yt-search-btn { width: 64px; background-color: var(--yt-search-btn); border: none; border-left: 1px solid var(--yt-search-border); color: var(--yt-text); cursor: pointer; font-size: 15px; height: 100%; display: flex; align-items: center; justify-content: center; }
+    
+    .yt-mic-btn { width: 40px; height: 40px; border-radius: 50%; background-color: var(--yt-search-btn); border: none; color: var(--yt-text); display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: 12px; }
+
+    .yt-header-right { display: flex; align-items: center; justify-content: flex-end; width: 250px; gap: 12px; }
+    .yt-icon-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; color: var(--yt-text); }
+    .yt-profile-avatar { width: 32px; height: 32px; border-radius: 50%; background-color: #dddddd; background-size: cover; background-position: center; margin-left: 8px; }
+
+    .yt-main-layout { display: flex; gap: 24px; width: 1280px; padding: 24px 24px 8px 24px; box-sizing: border-box; margin: 0 auto; height: max-content; }
+
+    .yt-primary-col { width: 806px; flex-shrink: 0; }
+    
+    .yt-player-mock { width: 100%; height: 453px; background-color: #000; background-size: cover; background-position: center; border-radius: 12px; position: relative; border: 1px solid #e5e5e5; box-sizing: border-box; }
+    .yt-main-time-badge { position: absolute; bottom: 12px; right: 12px; background-color: var(--yt-badge-bg); color: #fff; padding: 3px 6px; font-size: 12px; font-weight: 500; border-radius: 4px; letter-spacing: 0.5px; }
+
+    .yt-video-title { font-size: 20px; font-weight: bold; margin: 12px 0 8px 0; line-height: 1.4; word-break: break-all; color: var(--yt-text-spec); }
+
+    .yt-video-metadata-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--yt-border); margin-bottom: 20px; }
+    .yt-channel-block { display: flex; align-items: center; gap: 12px; }
+    .yt-ch-logo { width: 40px; height: 40px; border-radius: 50%; background-color: #cccccc; background-size: cover; background-position: center; }
+    .yt-ch-details { display: flex; flex-direction: column; }
+    .yt-ch-name { font-size: 16px; font-weight: bold; color: var(--yt-text-spec); }
+    .yt-ch-subs { font-size: 12px; color: var(--yt-secondary); }
+    .yt-subscribe-button { background-color: var(--yt-sub-bg); color: var(--yt-sub-text); padding: 0 16px; height: 36px; border-radius: 18px; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: center; margin-left: 12px; cursor: pointer; }
+
+    .yt-actions-block { display: flex; gap: 8px; }
+    .yt-meta-btn { background-color: var(--yt-search-btn); border: none; padding: 0 16px; height: 36px; border-radius: 18px; font-size: 14px; display: flex; align-items: center; gap: 6px; font-weight: 500; }
+
+    .yt-like-dislike-group { background-color: var(--yt-search-btn); display: flex; align-items: center; height: 36px; border-radius: 18px; overflow: hidden; }
+    .yt-ld-btn { display: flex; align-items: center; justify-content: center; padding: 0 14px; height: 100%; cursor: pointer; font-size: 14px; font-weight: 500; gap: 6px; }
+    .yt-ld-btn i { display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .yt-ld-btn:hover { background-color: #e5e5e5; }
+    .yt-ld-divider { width: 1px; height: 24px; background-color: #d3d3d3; }
+
+    .yt-comments-section { margin-top: 24px; }
+    .yt-comments-summary { display: flex; align-items: center; gap: 32px; margin-bottom: 24px; }
+    
+    .yt-comments-count { font-size: 22px; font-weight: 700; color: var(--yt-text-spec); }
+    .yt-comments-sort { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+    .yt-pin-indicator { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--yt-secondary); margin-bottom: 10px; padding-left: 60px; font-weight: 500; }
+
+    .comment-node { display: flex; gap: 16px; margin-bottom: 24px; position: relative; padding: 8px; border-radius: 8px; transition: background-color 0.2s; }
+    .comment-node:last-child { margin-bottom: 0 !important; }
+    
+    .comment-node.dragging { opacity: 0.4; background-color: var(--yt-border); border: 1px dashed var(--editor-accent); }
+    .comment-node:hover .node-actions-trigger { opacity: 1; }
+
+    .node-avatar { width: 44px; height: 44px; border-radius: 50%; background-color: #dddddd; background-size: cover; background-position: center; flex-shrink: 0; }
+    .comment-node.is-reply-node { padding-left: 60px; }
+
+    .node-main-content { flex: 1; min-width: 0; }
+    .node-meta-line { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 14px; }
+    .node-author-name { font-weight: 600; color: var(--yt-text-spec); font-size: 14px; }
+    .node-badge-owner { background-color: var(--yt-secondary); color: var(--yt-bg); font-size: 11px; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
+    .node-time-string { color: var(--yt-secondary); font-size: 13px; }
+
+    .node-body-text { font-size: 16px; line-height: 1.5; white-space: pre-line; word-break: break-all; color: var(--yt-text); outline: none; }
+    .node-body-text:focus { border-bottom: 2px solid #555; background-color: rgba(0,0,0, 0.03); }
+
+    .node-interaction-row { display: flex; align-items: center; gap: 16px; margin-top: 10px; color: var(--yt-text); font-size: 13px; font-weight: 500; }
+    .node-act-item { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--yt-text); }
+    .node-act-item i { font-size: 15px; display: flex; align-items: center; }
+
+    .edit-only { display: inline-flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+    .comment-node:hover .edit-only { opacity: 1; }
+    .drag-handle-trigger { cursor: grab; color: #aaaaaa; padding: 4px; font-size: 16px; }
+    .drag-handle-trigger:active { cursor: grabbing; }
+    .node-delete-trigger { background: none; border: none; color: #ff3333; cursor: pointer; padding: 4px; font-size: 15px; margin-left: auto; }
+
+    .yt-secondary-col { width: 402px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
+    
+    .rec-card-node { display: flex; gap: 8px; position: relative; padding: 4px; border-radius: 6px; }
+    .rec-card-node:last-child { margin-bottom: 0 !important; }
+    
+    .rec-card-node:hover .edit-only { opacity: 1; }
+    .rec-thumb-frame { width: 168px; height: 94px; background-color: #eeeeee; background-size: cover; background-position: center; border-radius: 8px; flex-shrink: 0; position: relative; border: 1px solid #e5e5e5; }
+    .rec-time-badge { position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.8); color: #fff; font-size: 11px; padding: 2px 4px; border-radius: 4px; font-weight: 500; }
+    .rec-info-frame { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; padding-top: 2px;}
+    .rec-video-title { font-size: 15px; font-weight: 600; color: var(--yt-text-spec); line-height: 1.4; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
+    .rec-channel-name { font-size: 13px; color: var(--yt-secondary); margin-bottom: 2px; }
+    .rec-metadata-line { font-size: 13px; color: var(--yt-secondary); }
+
+    .is-capturing .edit-only { display: none !important; }
+    .is-capturing { border-radius: 0 !important; box-shadow: none !important; }
+</style>
+</head>
+<body>
+
+<div class="editor-sidebar">
+    <div class="editor-header">
+        <h2>MEDIA EDITOR</h2>
+        <p>26.05.31.8pm last edited</p>
+    </div>
+    
+    <div class="editor-scroll-area">
+        <div class="section-title">main video</div>
+        <div class="input-group">
+            <label>main image</label>
+            <input type="file" id="in-thumb" accept="image/*">
+        </div>
+        <div class="flex-row">
+            <div class="input-group">
+                <label>video length</label>
+                <input type="text" id="in-time" value="00:00" oninput="syncFormToMockup()">
+            </div>
+            <div class="input-group">
+                <label>likes</label>
+                <input type="text" id="in-video-likes" value="0.0만" oninput="syncFormToMockup()">
+            </div>
+        </div>
+        <div class="input-group">
+            <label>video title</label>
+            <textarea id="in-title" placeholder="영상 제목 입력" oninput="syncFormToMockup()">예시 텍스트 입력</textarea>
+        </div>
+        <div class="input-group">
+            <label>search text</label>
+            <input type="text" id="in-search-query" value="예시 텍스트 입력" oninput="syncFormToMockup()">
+        </div>
+
+        <div class="section-title">channel info</div>
+        <div class="input-group" style="padding: 8px; background: #f0f0f0; border-radius: 6px;">
+            <label style="color: #000;">profile (upper side)</label>
+            <input type="file" id="in-my-avatar" accept="image/*">
+        </div>
+        
+        <div class="input-group" style="margin-top: 10px;">
+            <label>channel profic</label>
+            <input type="file" id="in-ch-avatar" accept="image/*">
+        </div>
+        <div class="flex-row">
+            <div class="input-group">
+                <label>channel name</label>
+                <input type="text" id="in-ch-name" value="예시 텍스트" oninput="syncFormToMockup()">
+            </div>
+            <div class="input-group">
+                <label>subscriber</label>
+                <input type="text" id="in-ch-subs" value="구독자 N만명" oninput="syncFormToMockup()">
+            </div>
+        </div>
+
+        <div class="section-title">comment</div>
+        <div class="input-group">
+            <label>all comments</label>
+            <input type="text" id="in-total-comments" value="댓글 1개" oninput="syncFormToMockup()">
+        </div>
+
+        <div style="background: #f8f8f8; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0; margin-top: 12px;">
+            <div class="input-group">
+                <label>fix comment profic</label>
+                <input type="file" id="in-pin-avatar" accept="image/*">
+            </div>
+            <div class="flex-row">
+                <div class="input-group">
+                    <label>name</label>
+                    <input type="text" id="in-pin-name" value="예시 텍스트" oninput="syncFormToMockup()">
+                </div>
+                <div class="input-group">
+                    <label>time</label>
+                    <input type="text" id="in-pin-time" value="N시간 전" oninput="syncFormToMockup()">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>comment and likes</label>
+                <input type="text" id="in-pin-likes" value="894" oninput="syncFormToMockup()">
+            </div>
+            <div class="input-group">
+                <label>comment text</label>
+                <textarea id="in-pin-text" oninput="syncFormToMockup()">예시 텍스트 입력</textarea>
+            </div>
+        </div>
+
+        <div class="section-title">more comment</div>
+        <div style="background: #f8f8f8; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0;">
+            <div class="input-group">
+                <label>comment type</label>
+                <select id="in-com-type">
+                    <option value="comment">comment</option>
+                    <option value="reply">reply</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>profile image</label>
+                <input type="file" id="in-com-avatar" accept="image/*">
+            </div>
+            <div class="flex-row">
+                <div class="input-group">
+                    <label>name</label>
+                    <input type="text" id="in-com-name" value="예시 텍스트">
+                </div>
+                <div class="input-group">
+                    <label>time</label>
+                    <input type="text" id="in-com-time" value="N분 전">
+                </div>
+                <div class="input-group">
+                    <label>like</label>
+                    <input type="text" id="in-com-likes" value="N.N천">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>detail comments</label>
+                <textarea id="in-com-text" placeholder="예시 텍스트 입력">예시 텍스트</textarea>
+            </div>
+            <button type="button" class="btn-block btn-dark" onclick="addDynamicCommentNode()"> insert into comment list</button>
+        </div>
+
+        <div class="section-title">related videos</div>
+        <div style="background: #f8f8f8; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0;">
+            <div class="input-group">
+                <label>video image</label>
+                <input type="file" id="in-rec-thumb" accept="image/*">
+            </div>
+            <div class="input-group">
+                <label>video title</label>
+                <input type="text" id="in-rec-title" value="예시">
+            </div>
+            <div class="input-group">
+                <label>channel name</label>
+                <input type="text" id="in-rec-channel" value="예시">
+            </div>
+            <div class="flex-row">
+                <div class="input-group">
+                    <label>time length</label>
+                    <input type="text" id="in-rec-time" value="10:00">
+                </div>
+                <div class="input-group">
+                    <label>views</label>
+                    <input type="text" id="in-rec-views" value="조회수 N만회">
+                </div>
+                <div class="input-group">
+                    <label>upload date</label>
+                    <input type="text" id="in-rec-date" value="N주 전">
+                </div>
+            </div>
+            <button type="button" class="btn-block btn-dark" onclick="addRelatedVideoNode()"> insert into related video</button>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <button class="btn-block btn-success" style="font-size: 16px;" onclick="executeCaptureWorkflow()"> download</button>
+        </div>
+    </div>
+</div>
+
+<div class="preview-workspace">
+    <div id="scale-wrapper">
+        <div id="capture-container">
+            <div class="youtube-pc-window" id="yt-viewport">
+                
+                <header class="yt-header">
+                    <div class="yt-header-left">
+                        <div class="yt-menu-icon"><i class="fa-solid fa-bars"></i></div>
+                    </div>
+                    <div class="yt-header-center">
+                        <div class="yt-search-wrapper">
+                            <input type="text" class="yt-search-input" id="mock-search-bar" value="검색어 입력">
+                            <button class="yt-search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        </div>
+                        <button class="yt-mic-btn"><i class="fa-solid fa-microphone"></i></button>
+                    </div>
+                    <div class="yt-header-right">
+                        <div class="yt-icon-btn"><i class="fa-solid fa-video"></i></div>
+                        <div class="yt-icon-btn"><i class="fa-solid fa-bell"></i></div>
+                        <div class="yt-profile-avatar" id="mock-user-avatar"></div>
+                    </div>
+                </header>
+
+                <main class="yt-main-layout">
+                    
+                    <section class="yt-primary-col">
+                        <div class="yt-player-mock" id="mock-video-player">
+                            <div class="yt-main-time-badge" id="mock-video-time">24:15</div>
+                        </div>
+                        
+                        <h1 class="yt-video-title" id="mock-video-title">예시 텍스트 제목을 입력하세요</h1>
+                        
+                        <div class="yt-video-metadata-row">
+                            <div class="yt-channel-block">
+                                <div class="yt-ch-logo" id="mock-ch-avatar"></div>
+                                <div class="yt-ch-details">
+                                    <span class="yt-ch-name" id="mock-ch-name">예시</span>
+                                    <span class="yt-ch-subs" id="mock-ch-subs">구독자 N만명</span>
+                                </div>
+                                <div class="yt-subscribe-button" style="background:#0f0f0f; color:#fff;">구독</div>
+                            </div>
+                            
+                            <div class="yt-actions-block">
+                                <div class="yt-like-dislike-group">
+                                    <div class="yt-ld-btn"><i class="fa-regular fa-thumbs-up"></i> <span id="mock-video-likes">61만</span></div>
+                                    <div class="yt-ld-divider"></div>
+                                    <div class="yt-ld-btn"><i class="fa-regular fa-thumbs-down"></i></div>
+                                </div>
+                                <div class="yt-meta-btn"><i class="fa-solid fa-share"></i> 공유</div>
+                                <div class="yt-meta-btn"><i class="fa-solid fa-download"></i> 오프라인 저장</div>
+                                <div class="yt-meta-btn"><i class="fa-solid fa-ellipsis"></i></div>
+                            </div>
+                        </div>
+
+                        <div class="yt-comments-section">
+                            <div class="yt-comments-summary">
+                                <span class="yt-comments-count">댓글 1개</span>
+                                <span class="yt-comments-sort"><i class="fa-solid fa-bars-staggered"></i> 정렬 기준</span>
+                            </div>
+
+                            <div class="yt-pin-container-root">
+                                <div class="yt-pin-indicator">
+                                    <i class="fa-solid fa-thumbtack"></i> <span id="mock-pin-owner-name">예시</span> 님이 고정함
+                                </div>
+                                <div class="comment-node">
+                                    <div class="node-avatar" id="mock-pin-avatar"></div>
+                                    <div class="node-main-content">
+                                        <div class="node-meta-line">
+                                            <span class="node-author-name" id="mock-pin-author">예시</span>
+                                            <span class="node-badge-owner">작성자</span>
+                                            <span class="node-time-string" id="mock-pin-time">1시간 전</span>
+                                        </div>
+                                        <div class="node-body-text" contenteditable="true" id="mock-pin-text">예시 텍스트</div>
+                                        <div class="node-interaction-row">
+                                            <div class="node-act-item"><i class="fa-regular fa-thumbs-up"></i> <span id="mock-pin-likes">894</span></div>
+                                            <div class="node-act-item"><i class="fa-regular fa-thumbs-down"></i></div>
+                                            <div class="node-act-item" style="margin-left: 8px;">답글</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="dynamic-comments-root-container"></div>
+                        </div>
+                    </section>
+
+                    <aside class="yt-secondary-col" id="dynamic-related-root-container"></aside>
+
+                </main>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let dataStore = {
+        thumbMain: "", avatarChannel: "", avatarPin: "", avatarMe: "", avatarTempComment: "", avatarTempRelated: "",
+        comments: [
+            { id: "c1", type: "reply", avatar: "", name: "예시", time: "N분 전", likes: "NN.천", text: "예시 텍스트" }
+        ],
+        relatedVideos: [
+            { id: "r1", thumb: "", title: "예시1", channel: "예시1", time: "10:00", views: "조회수 10만회", date: "1주 전" },
+            { id: "r2", thumb: "", title: "예시2", channel: "예시2", time: "10:00", views: "조회수 10만회", date: "1주 전" },
+            { id: "r3", thumb: "", title: "예시3", channel: "예시3", time: "10:00", views: "조회수 10만회", date: "1주 전" }
+        ]
+    };
+
+    function parseImageFile(fileInputId, callback) {
+        const input = document.getElementById(fileInputId);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { callback(e.target.result); };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    document.getElementById('in-thumb').addEventListener('change', () => parseImageFile('in-thumb', res => { dataStore.thumbMain = res; syncFormToMockup(); }));
+    document.getElementById('in-ch-avatar').addEventListener('change', () => parseImageFile('in-ch-avatar', res => { dataStore.avatarChannel = res; syncFormToMockup(); }));
+    document.getElementById('in-pin-avatar').addEventListener('change', () => parseImageFile('in-pin-avatar', res => { dataStore.avatarPin = res; syncFormToMockup(); }));
+    document.getElementById('in-my-avatar').addEventListener('change', () => parseImageFile('in-my-avatar', res => { dataStore.avatarMe = res; syncFormToMockup(); }));
+    document.getElementById('in-com-avatar').addEventListener('change', () => parseImageFile('in-com-avatar', res => { dataStore.avatarTempComment = res; }));
+    document.getElementById('in-rec-thumb').addEventListener('change', () => parseImageFile('in-rec-thumb', res => { dataStore.avatarTempRelated = res; }));
+
+    function syncFormToMockup() {
+        document.getElementById('mock-video-title').innerText = document.getElementById('in-title').value;
+        document.getElementById('mock-video-time').innerText = document.getElementById('in-time').value;
+        document.getElementById('mock-video-likes').innerText = document.getElementById('in-video-likes').value || "0";
+        document.getElementById('mock-search-bar').value = document.getElementById('in-search-query').value;
+        
+        document.getElementById('mock-ch-name').innerText = document.getElementById('in-ch-name').value;
+        document.getElementById('mock-ch-subs').innerText = document.getElementById('in-ch-subs').value;
+        
+        document.getElementById('mock-pin-owner-name').innerText = document.getElementById('in-ch-name').value;
+        document.getElementById('mock-pin-author').innerText = document.getElementById('in-pin-name').value;
+        document.getElementById('mock-pin-time').innerText = document.getElementById('in-pin-time').value;
+        
+        document.getElementById('mock-pin-likes').innerText = document.getElementById('in-pin-likes').value || "0";
+        document.getElementById('mock-pin-text').innerText = document.getElementById('in-pin-text').value;
+
+        if (dataStore.thumbMain) document.getElementById('mock-video-player').style.backgroundImage = `url('${dataStore.thumbMain}')`;
+        if (dataStore.avatarChannel) document.getElementById('mock-ch-avatar').style.backgroundImage = `url('${dataStore.avatarChannel}')`;
+        if (dataStore.avatarPin) document.getElementById('mock-pin-avatar').style.backgroundImage = `url('${dataStore.avatarPin}')`;
+        if (dataStore.avatarMe) document.getElementById('mock-user-avatar').style.backgroundImage = `url('${dataStore.avatarMe}')`;
+
+        document.querySelector('.yt-comments-count').innerText = document.getElementById('in-total-comments').value || "댓글 0개";
+
+        renderDynamicComments();
+        renderRelatedVideos();
+    }
+
+    function renderDynamicComments() {
+        const root = document.getElementById('dynamic-comments-root-container');
+        root.innerHTML = '';
+        dataStore.comments.forEach((node, index) => {
+            const isReply = node.type === 'reply';
+            const nodeClass = isReply ? 'comment-node is-reply-node' : 'comment-node';
+            const avatarStyle = node.avatar ? `background-image:url('${node.avatar}')` : 'background-color:#dddddd;';
+
+            root.innerHTML += `
+                <div class="${nodeClass}" draggable="true" data-index="${index}" ondragstart="handleNodeDragStart(event)" ondragover="handleNodeDragOver(event)" ondrop="handleNodeDrop(event)" ondragend="handleNodeDragEnd(event)">
+                    <div class="drag-handle-trigger edit-only"><i class="fa-solid fa-grip-vertical"></i></div>
+                    <div class="node-avatar" style="${avatarStyle}"></div>
+                    <div class="node-main-content">
+                        <div class="node-meta-line">
+                            <span class="node-author-name">${node.name}</span>
+                            <span class="node-time-string">${node.time}</span>
+                        </div>
+                        <div class="node-body-text" contenteditable="true" onblur="updateCommentDataText(${index}, this)">${node.text}</div>
+                        <div class="node-interaction-row">
+                            <div class="node-act-item"><i class="fa-regular fa-thumbs-up"></i> ${node.likes}</div>
+                            <div class="node-act-item"><i class="fa-regular fa-thumbs-down"></i></div>
+                            ${!isReply ? '<div class="node-act-item" style="margin-left:8px;">답글</div>' : ''}
+                        </div>
+                    </div>
+                    <button class="node-delete-trigger edit-only" onclick="removeCommentNode(${index})"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            `;
+        });
+    }
+
+    function renderRelatedVideos() {
+        const root = document.getElementById('dynamic-related-root-container');
+        root.innerHTML = '';
+        dataStore.relatedVideos.forEach((video, index) => {
+            const thumbStyle = video.thumb ? `background-image:url('${video.thumb}')` : 'background-color:#eeeeee;';
+            root.innerHTML += `
+                <div class="rec-card-node" draggable="true" data-index="${index}" ondragstart="handleVideoDragStart(event)" ondragover="handleVideoDragOver(event)" ondrop="handleVideoDrop(event)" ondragend="handleVideoDragEnd(event)">
+                    <div class="drag-handle-trigger edit-only" style="align-self:center;"><i class="fa-solid fa-grip-vertical"></i></div>
+                    <div class="rec-thumb-frame" style="${thumbStyle}">
+                        <div class="rec-time-badge">${video.time}</div>
+                    </div>
+                    <div class="rec-info-frame">
+                        <span class="rec-video-title">${video.title}</span>
+                        <span class="rec-channel-name">${video.channel}</span>
+                        <span class="rec-metadata-line">${video.views} • ${video.date}</span>
+                    </div>
+                    <button class="node-delete-trigger edit-only" onclick="removeVideoNode(${index})" style="align-self:flex-start;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `;
+        });
+    }
+
+    function addDynamicCommentNode() {
+        const text = document.getElementById('in-com-text').value;
+        if(!text) return alert("댓글 내용을 입력해 주세요.");
+        dataStore.comments.push({
+            id: 'dyn_' + Date.now(),
+            type: document.getElementById('in-com-type').value,
+            avatar: dataStore.avatarTempComment,
+            name: document.getElementById('in-com-name').value || "익명 시청자",
+            time: document.getElementById('in-com-time').value || "방금 전",
+            likes: document.getElementById('in-com-likes').value || "0",
+            text
+        });
+        document.getElementById('in-com-text').value = '';
+        syncFormToMockup();
+    }
+
+    function removeCommentNode(index) {
+        if(confirm("댓글을 삭제할까요?")) { dataStore.comments.splice(index, 1); syncFormToMockup(); }
+    }
+    function updateCommentDataText(index, element) { dataStore.comments[index].text = element.innerText; }
+    
+    function addRelatedVideoNode() {
+        dataStore.relatedVideos.push({
+            id: 'vid_' + Date.now(), thumb: dataStore.avatarTempRelated,
+            title: document.getElementById('in-rec-title').value || "추천 비디오 제목",
+            channel: document.getElementById('in-rec-channel').value || "추천 채널",
+            time: document.getElementById('in-rec-time').value || "10:00",
+            views: document.getElementById('in-rec-views').value || "조회수 10만회",
+            date: document.getElementById('in-rec-date').value || "1주 전"
+        });
+        syncFormToMockup();
+    }
+    function removeVideoNode(index) { dataStore.relatedVideos.splice(index, 1); syncFormToMockup(); }
+
+    let draggedNodeIndex = null, draggedVideoIndex = null;
+    function handleNodeDragStart(e) { draggedNodeIndex = e.currentTarget.getAttribute('data-index'); e.currentTarget.classList.add('dragging'); }
+    function handleNodeDragOver(e) { e.preventDefault(); }
+    function handleNodeDrop(e) {
+        e.preventDefault();
+        const targetIndex = e.currentTarget.getAttribute('data-index');
+        if(draggedNodeIndex !== null && targetIndex !== null && draggedNodeIndex !== targetIndex) {
+            const targetItem = dataStore.comments.splice(draggedNodeIndex, 1)[0];
+            dataStore.comments.splice(targetIndex, 0, targetItem);
+            syncFormToMockup();
+        }
+    }
+    function handleNodeDragEnd(e) { e.currentTarget.classList.remove('dragging'); draggedNodeIndex = null; }
+
+    function handleVideoDragStart(e) { draggedVideoIndex = e.currentTarget.getAttribute('data-index'); e.currentTarget.style.opacity = '0.5'; }
+    function handleVideoDragOver(e) { e.preventDefault(); }
+    function handleVideoDrop(e) {
+        e.preventDefault();
+        const targetIndex = e.currentTarget.getAttribute('data-index');
+        if(draggedVideoIndex !== null && targetIndex !== null && draggedVideoIndex !== targetIndex) {
+            const targetItem = dataStore.relatedVideos.splice(draggedVideoIndex, 1)[0];
+            dataStore.relatedVideos.splice(targetIndex, 0, targetItem);
+            syncFormToMockup();
+        }
+    }
+    function handleVideoDragEnd(e) { e.currentTarget.style.opacity = '1'; draggedVideoIndex = null; }
+
+    function executeCaptureWorkflow() {
+        const targetWindow = document.getElementById('capture-container');
+        const scaleWrapper = document.getElementById('scale-wrapper');
+        
+        targetWindow.classList.add('is-capturing');
+        
+        const originalTransform = scaleWrapper.style.transform;
+        scaleWrapper.style.transform = 'scale(1)';
+
+        setTimeout(() => {
+            html2canvas(targetWindow, {
+                backgroundColor: '#ffffff',
+                scale: 3, 
+                useCORS: true,
+                logging: false,
+                width: 1280,
+                windowWidth: 1280,
+                scrollX: 0,
+                scrollY: 0
+            }).then(canvas => {
+                scaleWrapper.style.transform = originalTransform;
+                targetWindow.classList.remove('is-capturing');
+                
+                let downloadLink = document.createElement('a');
+                downloadLink.download = `youtube_capture_pro.png`;
+                downloadLink.href = canvas.toDataURL('image/png', 1.0);
+                downloadLink.click();
+            }).catch(error => {
+                console.error("Capture Error: ", error);
+                scaleWrapper.style.transform = originalTransform;
+                targetWindow.classList.remove('is-capturing');
+                alert("이미지 변환 중 오류가 발생했습니다.");
+            });
+        }, 300); 
+    }
+
+    syncFormToMockup();
+</script>
+
+</body>
+</html>
